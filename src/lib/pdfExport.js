@@ -1,5 +1,6 @@
 import * as fabric from 'fabric';
 import { jsPDF } from 'jspdf';
+import { toVersionedJson, CANVAS_CUSTOM_PROPS } from './schema';
 
 /**
  * Rasterise a live Fabric canvas using its lower-canvas element directly.
@@ -147,12 +148,10 @@ export function exportImage(canvas, format = 'png', quality = 2) {
 }
 
 export function exportToJSON(canvas) {
-  const json = canvas.toJSON(['id', 'name', 'selectable', 'evented']);
   const design = {
-    version: '1.0',
     exportedAt: new Date().toISOString(),
     canvas: { width: canvas.getWidth(), height: canvas.getHeight() },
-    ...json,
+    ...toVersionedJson(canvas.toJSON(CANVAS_CUSTOM_PROPS)),
   };
   const blob = new Blob([JSON.stringify(design, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);

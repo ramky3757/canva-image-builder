@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useLayoutEffect, useState } from 'react';
 import * as fabric from 'fabric';
+import { fromVersionedJson, CANVAS_CUSTOM_PROPS } from '../lib/schema';
 
 const HISTORY_EVENTS = ['object:added', 'object:removed', 'object:modified'];
 
@@ -54,7 +55,7 @@ export default function EditorCanvas({
 
     async function initialize() {
       if (initialJson) {
-        await fc.loadFromJSON(initialJson);
+        await fc.loadFromJSON(fromVersionedJson(initialJson));
         fc.renderAll();
       } else if (initialImageUrl) {
         const img = await fabric.FabricImage.fromURL(initialImageUrl);
@@ -82,7 +83,7 @@ export default function EditorCanvas({
       HISTORY_EVENTS.forEach((event) => {
         fc.on(event, () => {
           if (!readyRef.current) return;
-          const json = JSON.stringify(fc.toJSON(['id', 'name', 'selectable', 'evented']));
+          const json = JSON.stringify(fc.toJSON(CANVAS_CUSTOM_PROPS));
           onSnapshotRef.current?.(json);
         });
       });

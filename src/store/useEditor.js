@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useEditorStore } from './EditorContext';
+import { toVersionedJson, CANVAS_CUSTOM_PROPS } from '../lib/schema';
 
 export function useEditor() {
   const store = useEditorStore();
@@ -23,7 +24,7 @@ export function useEditor() {
         if (canvas) {
           const oldW = canvas.getWidth();
           const oldH = canvas.getHeight();
-          const json = JSON.stringify(canvas.toJSON(['id', 'name', 'selectable', 'evented']));
+          const json = JSON.stringify(toVersionedJson(canvas.toJSON(CANVAS_CUSTOM_PROPS)));
           // Persist so initialJson prop is set when EditorCanvas re-mounts
           dispatch({ type: 'SAVE_PAGE_JSON', pageId: activePageId, json });
           // After the new canvas initialises and objects are restored, scale them
@@ -73,7 +74,7 @@ export function useEditor() {
       const canvas = getCanvas(pageId);
       let json = null;
       if (canvas) {
-        json = JSON.stringify(canvas.toJSON(['id', 'name', 'selectable', 'evented']));
+        json = JSON.stringify(toVersionedJson(canvas.toJSON(CANVAS_CUSTOM_PROPS)));
         const thumbnail = canvas.toDataURL({ format: 'jpeg', multiplier: 0.12, quality: 0.8 });
         // Save source page before duplicating so state is consistent
         dispatch({ type: 'SAVE_PAGE_JSON', pageId, json });
@@ -90,7 +91,7 @@ export function useEditor() {
       // Persist current canvas state and generate thumbnail before leaving
       const canvas = getCanvas(activePageId);
       if (canvas) {
-        const json = JSON.stringify(canvas.toJSON(['id', 'name', 'selectable', 'evented']));
+        const json = JSON.stringify(toVersionedJson(canvas.toJSON(CANVAS_CUSTOM_PROPS)));
         const thumbnail = canvas.toDataURL({ format: 'jpeg', multiplier: 0.12, quality: 0.8 });
         dispatch({ type: 'SAVE_PAGE_JSON', pageId: activePageId, json });
         dispatch({ type: 'UPDATE_PAGE_THUMBNAIL', pageId: activePageId, thumbnail });

@@ -1,5 +1,9 @@
 import { useAuth } from '../auth/AuthContext';
 
+// When VITE_DISABLE_AUTH=true the app runs in external-auth / E2E mode —
+// there is no local admin session, so the logout button is hidden.
+const AUTH_DISABLED = import.meta.env.VITE_DISABLE_AUTH === 'true';
+
 const CANVAS_PRESETS = [
   { label: 'A4',     w: 794,  h: 1123 },
   { label: '1080²',  w: 1080, h: 1080 },
@@ -33,7 +37,7 @@ function BrandBadge({ name }) {
 }
 
 export default function Toolbar({ onReset, onCanvasSizeChange, canvasSize, onUndo, onRedo }) {
-  const { brandName } = useAuth();
+  const { brandName, user, logout } = useAuth();
 
   return (
     <div
@@ -96,6 +100,24 @@ export default function Toolbar({ onReset, onCanvasSizeChange, canvasSize, onUnd
       </div>
 
       <div className="flex-1" />
+
+      {/* User badge + logout — hidden in external-auth / VITE_DISABLE_AUTH mode */}
+      {!AUTH_DISABLED && user && (
+        <div className="flex items-center gap-2 pl-3" style={{ borderLeft: '1px solid #e5e7eb' }}>
+          <span className="text-[11px] text-gray-500 max-w-[120px] truncate" title={user.email}>
+            {user.email}
+          </span>
+          <button
+            className="text-[11px] px-2.5 py-1.5 rounded-md font-medium border transition-all duration-150 text-gray-500 border-gray-200 whitespace-nowrap"
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#fff1f2'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#fca5a5'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; e.currentTarget.style.borderColor = '#e5e7eb'; }}
+            onClick={logout}
+            title="Sign out"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
 
       <button
         className="text-[11px] px-3 py-1.5 rounded-md font-medium border transition-all duration-150 text-gray-500 border-gray-200"

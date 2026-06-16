@@ -1,34 +1,41 @@
-import { useState, useCallback, useEffect } from 'react';
+/**
+ * App — thin shell that decides what to show.
+ *
+ * Static imports here (UploadZone, EditorProvider, AuthContext) load with the
+ * initial bundle and have NO Fabric.js dependency.
+ *
+ * EditorLayout (and everything it imports, including fabric) is a separate
+ * async chunk fetched only after the user starts a design session.
+ */
+import { useState, lazy, Suspense } from 'react';
 import UploadZone from './components/UploadZone';
-import EditorCanvas from './components/EditorCanvas';
-import LeftNav from './components/LeftNav';
-import PanelContainer from './components/PanelContainer';
-import Toolbar from './components/Toolbar';
-import PageStrip from './components/PageStrip';
-import { useEditor } from './store/useEditor';
+import { useEditorStore } from './store/EditorContext';
+
+// Code-split boundary — Fabric.js is only in this chunk
+const EditorLayout = lazy(() => import('./components/EditorLayout'));
+
+function EditorLoadingScreen() {
+  return (
+    <div className="flex items-center justify-center h-screen" style={{ background: '#f0f2f5' }}>
+      <div className="flex flex-col items-center gap-3">
+        <div
+          className="w-10 h-10 rounded-xl animate-pulse"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
+        />
+        <p className="text-sm text-gray-400">Loading editor…</p>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
-  const [started, setStarted] = useState(false);
+  const [started, setStarted]             = useState(false);
   const [initialImageUrl, setInitialImageUrl] = useState(null);
-
-  const {
-    activePage,
-    activePageId,
-    activePanel,
-    setActivePanel,
-    setCanvasSize,
-    undoActive,
-    redoActive,
-    snapshot,
-    getCanvas,
-    registerCanvas,
-    pendingJsonRef,
-    replayingRef,
-  } = useEditor();
+  const { dispatch }                      = useEditorStore();
 
   const handleUpload = (dataUrl, preset) => {
-    if (preset) setCanvasSize(preset.width, preset.height);
-    setInitialImageUrl(dataUrl || null);
+    if (preset) dispatch({ type: 'SET_PAGE_SIZE', width: preset.width, height: preset.height });
+    setInitialImageUrl(dataUrl ?? null);
     setStarted(true);
   };
 
@@ -37,74 +44,11 @@ export default function App() {
     setInitialImageUrl(null);
   };
 
-  const handleCanvasReady = useCallback(
-    (pageId, fabricCanvas) => {
-      registerCanvas(pageId, fabricCanvas);
-      if (pendingJsonRef.current) {
-        pendingJsonRef.current(fabricCanvas);
-        pendingJsonRef.current = null;
-      }
-    },
-    [registerCanvas, pendingJsonRef]
-  );
-
-  // onSnapshot is called by EditorCanvas after each object:added/removed/modified.
-  // We check replayingRef to avoid creating spurious history entries during undo/redo.
-  const handleSnapshot = useCallback(
-    (json) => {
-      if (replayingRef.current) return;
-      snapshot(activePageId, json);
-    },
-    [snapshot, activePageId, replayingRef]
-  );
-
-  // Global keyboard shortcuts
-  useEffect(() => {
-    const handler = (e) => {
-      const mod = e.ctrlKey || e.metaKey;
-      if (!mod) return;
-      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoActive(); }
-      if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redoActive(); }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [undoActive, redoActive]);
-
   if (!started) return <UploadZone onUpload={handleUpload} />;
 
-  const canvas = getCanvas(activePageId);
-
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={{ background: '#f0f2f5' }}>
-      <Toolbar
-        canvasSize={{ width: activePage?.width ?? 800, height: activePage?.height ?? 600 }}
-        onReset={handleReset}
-        onCanvasSizeChange={setCanvasSize}
-        onUndo={undoActive}
-        onRedo={redoActive}
-      />
-      <div className="flex flex-1 overflow-hidden">
-        <LeftNav active={activePanel} onSelect={setActivePanel} />
-        <PanelContainer
-          active={activePanel}
-          canvas={canvas}
-          onCanvasSizeChange={setCanvasSize}
-        />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          {activePage && (
-            <EditorCanvas
-              key={activePage.id}
-              pageId={activePage.id}
-              initialImageUrl={initialImageUrl}
-              canvasSize={{ width: activePage.width, height: activePage.height }}
-              initialJson={activePage.json}
-              onCanvasReady={handleCanvasReady}
-              onSnapshot={handleSnapshot}
-            />
-          )}
-          <PageStrip />
-        </div>
-      </div>
-    </div>
+    <Suspense fallback={<EditorLoadingScreen />}>
+      <EditorLayout initialImageUrl={initialImageUrl} onReset={handleReset} />
+    </Suspense>
   );
 }
