@@ -39,7 +39,7 @@ export default function EditorCanvas({
     const fc = new fabric.Canvas(el, {
       width: canvasSize.width,
       height: canvasSize.height,
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#ffffff',
       preserveObjectStacking: true,
     });
     fabricRef.current = fc;
