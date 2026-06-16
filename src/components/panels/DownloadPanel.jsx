@@ -11,12 +11,17 @@ export default function DownloadPanel() {
   const [imgFormat, setImgFormat]   = useState('png');
   const [imgQuality, setImgQuality] = useState(2);
   const [pdfBusy, setPdfBusy]       = useState(false);
+  const [pdfError, setPdfError]     = useState(null);
   const [lastSaved, setLastSaved]   = useState(null);
 
   const handleExportPDF = async () => {
     setPdfBusy(true);
+    setPdfError(null);
     try {
       await exportAllPagesToPDF(pages, getCanvas, pdfQuality);
+    } catch (err) {
+      console.error('PDF export failed:', err);
+      setPdfError(err?.message ?? 'Export failed — check browser console');
     } finally {
       setPdfBusy(false);
     }
@@ -92,6 +97,12 @@ export default function DownloadPanel() {
             ? `⏳ Exporting ${pages.length} page${pages.length > 1 ? 's' : ''}…`
             : `⬇ Download PDF${multiPage ? ` (${pages.length} pages)` : ''}`}
         </button>
+
+        {pdfError && (
+          <div className="mt-2 rounded p-2 text-xs text-red-700 bg-red-50 border border-red-200 break-words">
+            ⚠ {pdfError}
+          </div>
+        )}
       </div>
 
       {/* ── Image Export ──────────────────────────────────────────── */}
