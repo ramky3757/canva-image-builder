@@ -34,12 +34,21 @@ export function useEditor() {
             const ratioY = newH / oldH;
             const uniformScale = Math.min(ratioX, ratioY);
             newCanvas.getObjects().forEach((obj) => {
-              obj.set({
-                left: obj.left * ratioX,
-                top: obj.top * ratioY,
-                scaleX: (obj.scaleX || 1) * uniformScale,
-                scaleY: (obj.scaleY || 1) * uniformScale,
-              });
+              if (obj.name === '__tpl_bg__') {
+                // Background rect must always fill the full canvas after resize
+                obj.set({
+                  left: 0, top: 0,
+                  scaleX: newW / (obj.width || 1),
+                  scaleY: newH / (obj.height || 1),
+                });
+              } else {
+                obj.set({
+                  left: obj.left * ratioX,
+                  top: obj.top * ratioY,
+                  scaleX: (obj.scaleX || 1) * uniformScale,
+                  scaleY: (obj.scaleY || 1) * uniformScale,
+                });
+              }
               obj.setCoords();
             });
             newCanvas.renderAll();

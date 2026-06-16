@@ -44,6 +44,9 @@ function reducer(state, action) {
         action.height ?? active?.height ?? 600,
         state.pages.length + 1
       );
+      // Initialize with explicit empty JSON so EditorCanvas skips the
+      // initialImageUrl branch (which would copy page 1's photo to every new page).
+      page.json = JSON.stringify({ objects: [], background: '#ffffff' });
       return { ...state, pages: [...state.pages, page], activePageId: page.id };
     }
 
