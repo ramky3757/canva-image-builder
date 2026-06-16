@@ -2,11 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { resolveToken } from './tokenService';
 
 const FALLBACK_BRAND = import.meta.env.VITE_BRAND_NAME || 'Studio';
-const ADMIN_SESSION_KEY = 'zoomin_admin_auth';
+const ADMIN_SESSION_KEY = 'canvas_admin_auth';
 
 // Hardcoded admin credentials — change via env vars for production
-const ADMIN_EMAIL    = import.meta.env.VITE_ADMIN_EMAIL    || 'admin@zoomin.com';
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'Zoomin@2025!';
+const ADMIN_EMAIL    = import.meta.env.VITE_ADMIN_EMAIL    || 'admin@canvas.studio';
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'Canvas@2025!';
 
 const AuthContext = createContext(null);
 

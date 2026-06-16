@@ -11,7 +11,12 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5472)",
       "Bash(lsof -ti:5472)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5472/)",
-      "Bash(git commit -m 'Initial commit: Zoomin Product Builder — Canva-like SaaS editor *)"
+      "Bash(git commit -m 'Initial commit: Zoomin Product Builder — Canva-like SaaS editor *)",
+      "Bash(gh repo *)",
+      "Bash(npm install *)",
+      "Bash(vercel --version)",
+      "Bash(vercel whoami *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); p.name='canva-image-builder'; require\\('fs'\\).writeFileSync\\('./package.json', JSON.stringify\\(p,null,2\\)+'\\\\n'\\)\")"
     ],
     "additionalDirectories": [
       "/Users/ramakrishnarallabandi/Documents/Techmonks/Ram/image-editor/src"

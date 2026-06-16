@@ -1,5 +1,5 @@
 const DISABLE_AUTH = import.meta.env.VITE_DISABLE_AUTH === 'true';
-const SESSION_KEY = 'zoomin_editor_token';
+const SESSION_KEY = 'canvas_editor_token';
 
 const DEV_USER = {
   sub: 'dev-user',
