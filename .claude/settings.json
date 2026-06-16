@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pandoc requirement.docx -t markdown)",
+      "Bash(python3 -c ' *)",
+      "Bash(mkdir -p /Users/ramakrishnarallabandi/Documents/Techmonks/Ram/image-editor/src/auth /Users/ramakrishnarallabandi/Documents/Techmonks/Ram/image-editor/src/store /Users/ramakrishnarallabandi/Documents/Techmonks/Ram/image-editor/src/hooks)",
+      "Bash(npm run *)",
+      "Bash(xargs kill -9)",
+      "Bash(curl -s http://localhost:5472)",
+      "Bash(nohup npm --prefix /Users/ramakrishnarallabandi/Documents/Techmonks/Ram/image-editor run dev -- --port 5472)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5472)",
+      "Bash(lsof -ti:5472)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5472/)",
+      "Bash(git commit -m 'Initial commit: Zoomin Product Builder — Canva-like SaaS editor *)"
+    ],
+    "additionalDirectories": [
+      "/Users/ramakrishnarallabandi/Documents/Techmonks/Ram/image-editor/src"
+    ]
+  }
+}

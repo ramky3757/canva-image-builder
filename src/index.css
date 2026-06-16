@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #0f0f0f;
+  color: #fff;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.canvas-container {
+  position: relative !important;
+}
