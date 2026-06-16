@@ -1,33 +1,39 @@
-import { exportToPDF, exportToJSON } from '../../lib/pdfExport';
 import { useState } from 'react';
+import { exportAllPagesToPDF, exportImage, exportToJSON } from '../../lib/pdfExport';
+import { useEditorStore } from '../../store/EditorContext';
 
-export default function DownloadPanel({ canvas }) {
+export default function DownloadPanel() {
+  const { pages, getCanvas, activePageId } = useEditorStore();
+  // Always read canvas at call time (avoids stale-prop null issue)
+  const canvas = getCanvas(activePageId);
+
   const [pdfQuality, setPdfQuality] = useState(2);
-  const [format, setFormat] = useState('png');
-  const [lastSaved, setLastSaved] = useState(null);
+  const [imgFormat, setImgFormat]   = useState('png');
+  const [imgQuality, setImgQuality] = useState(2);
+  const [pdfBusy, setPdfBusy]       = useState(false);
+  const [lastSaved, setLastSaved]   = useState(null);
 
-  const downloadImage = () => {
+  const handleExportPDF = async () => {
+    setPdfBusy(true);
+    try {
+      await exportAllPagesToPDF(pages, getCanvas, pdfQuality);
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
+  const handleDownloadImage = () => {
     if (!canvas) return;
-    const dataUrl = canvas.toDataURL({ format, multiplier: pdfQuality });
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = `design.${format}`;
-    a.click();
+    exportImage(canvas, imgFormat, imgQuality);
   };
 
   const handleSaveJSON = () => {
     if (!canvas) return;
-    const design = exportToJSON(canvas);
+    exportToJSON(canvas);
     setLastSaved(new Date().toLocaleTimeString());
-    return design;
   };
 
-  const handleExportPDF = async () => {
-    if (!canvas) return;
-    await exportToPDF(canvas, pdfQuality);
-  };
-
-  const copyJSONToClipboard = () => {
+  const handleCopyJSON = () => {
     if (!canvas) return;
     const json = canvas.toJSON(['id', 'name', 'selectable', 'evented']);
     const design = {
@@ -39,91 +45,141 @@ export default function DownloadPanel({ canvas }) {
     navigator.clipboard.writeText(JSON.stringify(design, null, 2));
   };
 
+  const multiPage = pages.length > 1;
+
   return (
-    <div className="p-3 space-y-5">
-      {/* PDF Export */}
+    <div className="p-3 space-y-4">
+
+      {/* ── PDF Export ────────────────────────────────────────────── */}
       <div className="rounded-lg bg-white border border-gray-200 p-3 space-y-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">📄</span>
-          <p className="text-sm font-semibold text-gray-800">Export as PDF</p>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">Export as PDF</p>
+            {multiPage && (
+              <p className="text-[10px] text-violet-600">
+                All {pages.length} pages will be included
+              </p>
+            )}
+          </div>
         </div>
+
         <div>
-          <p className="text-xs text-gray-500 mb-1">Quality (resolution multiplier)</p>
+          <p className="text-xs text-gray-500 mb-1.5">Quality</p>
           <div className="flex gap-2">
             {[1, 2, 3].map((q) => (
               <button
                 key={q}
-                className={`flex-1 py-1.5 rounded text-xs transition-colors ${pdfQuality === q ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                 onClick={() => setPdfQuality(q)}
+                className="flex-1 py-1.5 rounded text-xs transition-colors"
+                style={pdfQuality === q
+                  ? { background: '#7c3aed', color: '#fff' }
+                  : { background: '#f3f4f6', color: '#374151' }}
               >
                 {q}× {q === 1 ? '(Fast)' : q === 2 ? '(Good)' : '(Best)'}
               </button>
             ))}
           </div>
         </div>
+
         <button
-          className="w-full py-2.5 rounded bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors"
           onClick={handleExportPDF}
+          disabled={pdfBusy}
+          className="w-full py-2.5 rounded text-sm font-medium text-white transition-colors disabled:opacity-60"
+          style={{ background: pdfBusy ? '#6d28d9' : '#7c3aed' }}
         >
-          ⬇ Download PDF
+          {pdfBusy
+            ? `⏳ Exporting ${pages.length} page${pages.length > 1 ? 's' : ''}…`
+            : `⬇ Download PDF${multiPage ? ` (${pages.length} pages)` : ''}`}
         </button>
       </div>
 
-      {/* Image Export */}
+      {/* ── Image Export ──────────────────────────────────────────── */}
       <div className="rounded-lg bg-white border border-gray-200 p-3 space-y-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">🖼</span>
           <p className="text-sm font-semibold text-gray-800">Export as Image</p>
         </div>
-        <div className="flex gap-2">
-          {['png', 'jpeg', 'webp'].map((f) => (
-            <button
-              key={f}
-              className={`flex-1 py-1.5 rounded text-xs uppercase transition-colors ${format === f ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              onClick={() => setFormat(f)}
-            >
-              {f}
-            </button>
-          ))}
+
+        <div>
+          <p className="text-xs text-gray-500 mb-1.5">Format</p>
+          <div className="flex gap-2">
+            {['png', 'jpeg', 'webp'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setImgFormat(f)}
+                className="flex-1 py-1.5 rounded text-xs uppercase transition-colors"
+                style={imgFormat === f
+                  ? { background: '#7c3aed', color: '#fff' }
+                  : { background: '#f3f4f6', color: '#374151' }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <div>
+          <p className="text-xs text-gray-500 mb-1.5">Quality</p>
+          <div className="flex gap-2">
+            {[1, 2, 3].map((q) => (
+              <button
+                key={q}
+                onClick={() => setImgQuality(q)}
+                className="flex-1 py-1.5 rounded text-xs transition-colors"
+                style={imgQuality === q
+                  ? { background: '#2563eb', color: '#fff' }
+                  : { background: '#f3f4f6', color: '#374151' }}
+              >
+                {q}×
+              </button>
+            ))}
+          </div>
+        </div>
+
         <button
-          className="w-full py-2.5 rounded bg-blue-700 text-white text-sm font-medium hover:bg-blue-600 transition-colors"
-          onClick={downloadImage}
+          onClick={handleDownloadImage}
+          disabled={!canvas}
+          className="w-full py-2.5 rounded text-sm font-medium text-white transition-colors disabled:opacity-50"
+          style={{ background: '#1d4ed8' }}
         >
-          ⬇ Download {format.toUpperCase()}
+          ⬇ Download {imgFormat.toUpperCase()} (this page)
         </button>
       </div>
 
-      {/* JSON */}
+      {/* ── JSON ──────────────────────────────────────────────────── */}
       <div className="rounded-lg bg-white border border-gray-200 p-3 space-y-3">
         <div className="flex items-center gap-2">
-          <span className="text-lg">{ '{}'}</span>
+          <span className="text-lg">&#123;&#125;</span>
           <p className="text-sm font-semibold text-gray-800">Save / Export JSON</p>
         </div>
         <p className="text-xs text-gray-500">
-          JSON captures all objects, positions, sizes, fonts and colors — reload it later to resume editing.
+          Saves all objects, positions, fonts, and colors. Reload later to resume editing.
         </p>
         <button
-          className="w-full py-2.5 rounded bg-green-600 text-white text-sm font-medium hover:bg-green-500 transition-colors"
           onClick={handleSaveJSON}
+          disabled={!canvas}
+          className="w-full py-2.5 rounded text-sm font-medium text-white transition-colors disabled:opacity-50"
+          style={{ background: '#16a34a' }}
         >
-          ⬇ Download JSON
+          ⬇ Download JSON (this page)
         </button>
         <button
-          className="w-full py-2 rounded bg-gray-100 text-gray-600 text-xs hover:bg-gray-200 transition-colors"
-          onClick={copyJSONToClipboard}
+          onClick={handleCopyJSON}
+          disabled={!canvas}
+          className="w-full py-2 rounded text-xs transition-colors disabled:opacity-50"
+          style={{ background: '#f3f4f6', color: '#374151' }}
         >
           📋 Copy JSON to Clipboard
         </button>
         {lastSaved && (
-          <p className="text-xs text-green-600 text-center">Last saved at {lastSaved}</p>
+          <p className="text-xs text-green-600 text-center">Saved at {lastSaved}</p>
         )}
       </div>
 
-      {/* Print hint */}
       <div className="rounded-lg bg-white border border-gray-200 p-3">
         <p className="text-xs text-gray-500 leading-relaxed">
-          <span className="text-gray-600 font-medium">Tip:</span> For best print quality, use PDF with 3× quality. A4 canvas (794×1123px) maps perfectly to A4 paper at 96dpi.
+          <span className="font-medium text-gray-600">Tip:</span> For best print quality use PDF 3×. A4 canvas (794×1123 px) maps exactly to A4 paper at 96 dpi.
         </p>
       </div>
     </div>

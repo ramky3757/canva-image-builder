@@ -35,12 +35,10 @@ export function useEditor() {
             const uniformScale = Math.min(ratioX, ratioY);
             newCanvas.getObjects().forEach((obj) => {
               if (obj.name === '__tpl_bg__') {
-                // Background rect must always fill the full canvas after resize
-                obj.set({
-                  left: 0, top: 0,
-                  scaleX: newW / (obj.width || 1),
-                  scaleY: newH / (obj.height || 1),
-                });
+                // Always stretch to cover the new canvas exactly.
+                // Set width/height directly (not via scaleX/scaleY) so the
+                // percentage-based gradient coords still map 0→1 to full extents.
+                obj.set({ left: 0, top: 0, width: newW, height: newH, scaleX: 1, scaleY: 1 });
               } else {
                 obj.set({
                   left: obj.left * ratioX,

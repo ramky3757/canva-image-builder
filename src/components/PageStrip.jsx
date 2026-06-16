@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import { useEditor } from '../store/useEditor';
 
 const THUMB_GRADIENTS = [
@@ -13,6 +14,22 @@ const THUMB_GRADIENTS = [
 
 export default function PageStrip() {
   const { pages, activePageId, setActivePage, addPage, removePage, duplicatePage } = useEditor();
+  const [toast, setToast]           = useState('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastTimerRef = useRef(null);
+
+  const handleSwitch = (pageId) => {
+    if (pageId === activePageId) return;
+    const from = pages.find((p) => p.id === activePageId);
+    setActivePage(pageId);
+    if (from) {
+      // Show brief auto-save confirmation
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      setToast(`${from.name} saved`);
+      setToastVisible(true);
+      toastTimerRef.current = setTimeout(() => setToastVisible(false), 2200);
+    }
+  };
 
   return (
     <div
@@ -27,7 +44,7 @@ export default function PageStrip() {
           <div
             key={page.id}
             className="relative group cursor-pointer shrink-0"
-            onClick={() => setActivePage(page.id)}
+            onClick={() => handleSwitch(page.id)}
             title={page.name}
           >
             {/* Thumbnail */}
@@ -121,6 +138,17 @@ export default function PageStrip() {
       <div className="ml-auto shrink-0 text-[10px] pr-1 select-none text-gray-400">
         {pages.length} {pages.length === 1 ? 'page' : 'pages'}
       </div>
+
+      {/* Auto-save toast */}
+      {toastVisible && (
+        <div
+          className="fixed bottom-28 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium text-white shadow-lg pointer-events-none z-50"
+          style={{ background: '#16a34a' }}
+        >
+          <span>✓</span>
+          <span>{toast} — switching page</span>
+        </div>
+      )}
     </div>
   );
 }

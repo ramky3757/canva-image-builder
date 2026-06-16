@@ -18,16 +18,24 @@ function py(c, f) { return Math.round(H(c) * f); }
  *  - canvas.toJSON() serialises it like any normal object (no gradient-on-canvas issues)
  *  - TemplatesPanel can skip it when preserving user photos
  *  - useEditor.setCanvasSize can stretch it to always fill the resized canvas
+ *
+ * IMPORTANT: gradientUnits must be 'percentage' with coords 0→1.
+ * Fabric.js renders gradients in the object's LOCAL coordinate space where
+ * (0,0) is the CENTER of the object, not its top-left corner.  Using pixel
+ * coords like {x2: W(c)} would place the gradient end-point far outside the
+ * rect, making only the top-left corner visible.  Percentage coords (0→1)
+ * are automatically mapped to the object's full extents by Fabric.js.
  */
 function bgGrad(c, c1, c2) {
   return new fabric.Rect({
     left: 0, top: 0, width: W(c), height: H(c),
     fill: new fabric.Gradient({
       type: 'linear',
-      coords: { x1: 0, y1: 0, x2: W(c), y2: H(c) },
+      gradientUnits: 'percentage',
+      coords: { x1: 0, y1: 0, x2: 1, y2: 1 },
       colorStops: [{ offset: 0, color: c1 }, { offset: 1, color: c2 }],
     }),
-    selectable: false, evented: false, name: '__tpl_bg__',
+    selectable: false, evented: false, strokeWidth: 0, name: '__tpl_bg__',
   });
 }
 
